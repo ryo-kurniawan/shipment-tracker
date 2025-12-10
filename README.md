@@ -54,6 +54,7 @@ src/
 ├── stores/             # Pinia state management
 │   └── shipmentStore.ts
 ├── types/              # TypeScript type definitions
+│   └── notification.ts
 │   ├── shipment.ts
 │   └── transporter.ts
 ├── views/              # Page components
