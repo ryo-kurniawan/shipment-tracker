@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Shipment } from '@/types/shipment'
-import StatusBadge from './StatusBadge.vue'
+import StatusBadge from '@/components/StatusBadge.vue'
 import { RouterLink } from 'vue-router'
 
 /**

@@ -1,25 +1,28 @@
 /**
- * Mirage.js Mock API Server
- * 
+ * Mirage.js Mock API Server (Enhanced with Pagination & Search)
+ *
  * Provides a mock REST API for development and testing without a real backend.
- * 
+ *
  * Endpoints:
- * - GET    /api/shipments          - Get all shipments
+ * - GET    /api/shipments          - Get all shipments (with optional pagination & search)
  * - GET    /api/shipments/:id      - Get single shipment by ID
  * - GET    /api/transporters        - Get all transporters
  * - PATCH  /api/shipments/:id/assign - Assign transporter to shipment
  * - PATCH  /api/shipments/:id/status - Update shipment status (for real-time simulation)
- * 
+ * - POST   /api/login              - Authenticate user and return session token
+ *
  * Business Rules Enforced:
  * - Vehicle type must match between shipment and transporter
  * - Transporters cannot be double-booked (one shipment at a time)
  * - Status updates are persisted for real-time simulation
+ * - Supports server-side pagination and search filtering
  */
 
 import { createServer, Model, Response } from 'miragejs'
 import type { Shipment } from '@/types/shipment'
 import type { Transporter } from '@/types/transporter'
-import { shipments, transporters } from './data'
+import { roles, shipments, transporters, users } from './data'
+import type { User } from '@/types/user'
 
 /**
  * Create and configure the Mirage.js mock server
@@ -30,6 +33,8 @@ export function makeServer() {
     models: {
       shipment: Model,
       transporter: Model,
+      user: Model,
+      role: Model,
     },
 
     /**
@@ -38,6 +43,8 @@ export function makeServer() {
     seeds(server) {
       shipments.forEach((shipment) => server.create('shipment', shipment))
       transporters.forEach((transporter) => server.create('transporter', transporter))
+      roles.forEach((role) => server.create('role', role))
+      users.forEach((user) => server.create('user', user))
     },
 
     /**
@@ -48,11 +55,106 @@ export function makeServer() {
       this.timing = 500 // Simulate network delay (500ms)
 
       /**
-       * GET /api/shipments
-       * Retrieve all shipments
+       * POST /api/login
+       * Authenticate user and return user data
        */
-      this.get('/shipments', (schema) => {
-        return schema.all('shipment')
+      this.post('/login', (schema, request) => {
+        const { email, password } = JSON.parse(request.requestBody)
+
+        if (!email || !password) {
+          return new Response(400, {}, { errors: ['Email and password are required'] })
+        }
+
+        const user = schema.all('user').models.find((u) => {
+          const userAttrs = u.attrs as User
+          return userAttrs.email === email && userAttrs.password === password
+        })
+
+        if (!user) {
+          return new Response(401, {}, { errors: ['Invalid email or password'] })
+        }
+
+        // Exclude password from the response
+        const userData = { ...user.attrs } as User
+        delete userData.password
+
+        return new Response(200, {}, { user: userData })
+      })
+
+      /**
+       * GET /api/shipments
+       * Retrieve all shipments with optional pagination and search
+       *
+       * Query parameters:
+       * - page: Page number (1-indexed)
+       * - limit: Items per page
+       * - search: Search query for origin, destination, or transporter name
+       *
+       * Response format (with pagination):
+       * {
+       *   shipments: [...],
+       *   pagination: {
+       *     page: 1,
+       *     limit: 10,
+       *     total: 50,
+       *     totalPages: 5
+       *   }
+       * }
+       */
+      this.get('/shipments', (schema, request) => {
+        const { queryParams } = request
+        let allShipments = schema.all('shipment').models.map((s) => s.attrs as Shipment)
+
+        // Apply search filtering if search query provided
+        if (queryParams.search) {
+          const searchTerm = (queryParams.search as string).toLowerCase()
+          allShipments = allShipments.filter((shipment) => {
+            // Search in origin, destination
+            const matchesShipment =
+              shipment.origin.toLowerCase().includes(searchTerm) ||
+              shipment.destination.toLowerCase().includes(searchTerm)
+
+            // Search in transporter name if assigned
+            let matchesTransporter = false
+            if (shipment.transporterId) {
+              const transporter = schema.find('transporter', shipment.transporterId)
+              if (transporter) {
+                const transporterData = transporter.attrs as Transporter
+                matchesTransporter = transporterData.name.toLowerCase().includes(searchTerm)
+              }
+            }
+
+            return matchesShipment || matchesTransporter
+          })
+        }
+
+        // Apply pagination if page and limit are provided
+        if (queryParams.page && queryParams.limit) {
+          const page = parseInt(queryParams.page as string)
+          const limit = parseInt(queryParams.limit as string)
+          const total = allShipments.length
+          const totalPages = Math.ceil(total / limit)
+
+          // Calculate start and end indices
+          const startIndex = (page - 1) * limit
+          const endIndex = startIndex + limit
+
+          // Slice the array for pagination
+          const paginatedShipments = allShipments.slice(startIndex, endIndex)
+
+          return {
+            shipments: paginatedShipments,
+            pagination: {
+              page,
+              limit,
+              total,
+              totalPages,
+            },
+          }
+        }
+
+        // Return all shipments if no pagination
+        return { shipments: allShipments }
       })
 
       /**
@@ -78,13 +180,13 @@ export function makeServer() {
       /**
        * PATCH /api/shipments/:id/assign
        * Assign or re-assign a transporter to a shipment
-       * 
+       *
        * Validation rules:
        * 1. Shipment and transporter must exist
        * 2. Vehicle types must match exactly
        * 3. Transporter cannot be assigned to multiple shipments simultaneously
        * 4. Updates shipment status to 'assigned' upon success
-       * 
+       *
        * @param {string} id - Shipment ID
        * @param {string} transporterId - Transporter ID to assign
        */
@@ -128,19 +230,14 @@ export function makeServer() {
         }
 
         // Business Rule 2: Transporter cannot be double-booked
-        // Check if this transporter is already assigned or actively transporting another shipment
-        const existingAssignment = schema
-          .all('shipment')
-          .models.find(
-            (s) => {
-              const shipmentAttrs = s.attrs as Shipment
-              return (
-                shipmentAttrs.transporterId === attrs.transporterId &&
-                (shipmentAttrs.status === 'assigned' || shipmentAttrs.status === 'in-transit') &&
-                s.id !== id // Exclude current shipment (allows re-assignment)
-              )
-            },
+        const existingAssignment = schema.all('shipment').models.find((s) => {
+          const shipmentAttrs = s.attrs as Shipment
+          return (
+            shipmentAttrs.transporterId === attrs.transporterId &&
+            (shipmentAttrs.status === 'assigned' || shipmentAttrs.status === 'in-transit') &&
+            s.id !== id
           )
+        })
 
         if (existingAssignment) {
           const existingShipmentData = existingAssignment.attrs as Shipment
@@ -167,10 +264,10 @@ export function makeServer() {
       /**
        * PATCH /api/shipments/:id/status
        * Update shipment status (used for real-time simulation)
-       * 
+       *
        * This endpoint is called by the real-time update simulation
        * to persist status changes across the application.
-       * 
+       *
        * @param {string} id - Shipment ID
        * @param {string} status - New status value
        */

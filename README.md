@@ -1,324 +1,555 @@
-# 🚚 Transport Shipment Tracker
+# Shipment Tracker
 
-A modern, responsive web application for tracking and managing transport shipments. Built with Vue 3, TypeScript, and Pinia, featuring real-time status updates and intelligent transporter assignment.
+A modern, full-featured shipment tracking application built with Vue 3, TypeScript, and Tailwind CSS. This application allows users to track shipments, manage transporters, and monitor delivery status in real-time.
 
-## 📋 Overview
+## 🚀 Features
 
-This application provides a comprehensive solution for managing shipments and transporters with the following key features:
+### Core Features
 
-### ✨ Core Features
+- **Shipment Management**: View and track shipments
+- **Transporter Assignment**: Assign transporters to shipments with validation
+- **Real-time Updates**: Live status updates for shipments
+- **Search & Filter**: Search shipments by origin or destination
+- **Pagination**: Client-side and server-side pagination support
+- **Responsive Design**: Mobile-first, fully responsive UI
 
-- **📦 Shipment Management**: View, track, and manage all shipments in a responsive grid layout
-- **🚗 Transporter Assignment**: Assign transporters to shipments with intelligent validation
-- **🔄 Real-Time Updates**: Optional real-time status update simulation (5-second intervals)
-- **✅ Business Rule Validation**:
-  - Vehicle type matching between shipments and transporters
-  - Prevent double-booking transporters
-  - Status-based assignment restrictions
-- **📱 Responsive Design**: Mobile-first design that works on all devices
-- **🔔 Toast Notifications**: Visual feedback for status changes and operations
-- **🧪 Comprehensive Testing**: 27 unit tests covering all business logic
+### Advanced Features
 
-### 🎯 Status Workflow
+- **Role-Based Access Control (RBAC)**: Admin and User roles with different permissions
+- **Notification System**: Global toast notifications for user actions
+- **Component Reusability**: Modular, reusable UI components
+- **API Separation**: Clean separation of API logic using composables
+- **Unit Testing**: Comprehensive test coverage with Vitest
 
-```
-not-assigned → assigned → in-transit → delivered
-                  ↓
-              cancelled
-```
+## 🛠️ Tech Stack
 
-## 🏗️ Architecture
-
-### Tech Stack
-
-- **Frontend Framework**: Vue 3 with Composition API (`<script setup>`)
+- **Framework**: Vue 3 (Composition API)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
 - **State Management**: Pinia
 - **Routing**: Vue Router
-- **Language**: TypeScript (strict mode)
-- **Styling**: TailwindCSS
-- **Mock API**: Mirage.js
 - **Testing**: Vitest
 - **Build Tool**: Vite
 
-### Project Structure
-
-```
-src/
-├── components/          # Reusable UI components
-│   ├── ShipmentCard.vue
-│   ├── StatusBadge.vue
-│   └── StatusUpdateNotification.vue
-├── mocks/              # Mock API server and data
-│   ├── server.ts       # Mirage.js configuration
-│   └── data.ts         # Sample data
-├── stores/             # Pinia state management
-│   └── shipmentStore.ts
-├── types/              # TypeScript type definitions
-│   ├── shipment.ts
-│   └── transporter.ts
-├── views/              # Page components
-│   ├── ShipmentListView.vue
-│   └── ShipmentDetailView.vue
-├── router/             # Vue Router configuration
-│   └── index.ts
-└── main.ts            # Application entry point
-```
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-- Node.js 18+
-- npm or yarn
-
-### Installation
-
-1. **Clone the repository**
-
-   ```bash
-   git clone <repository-url>
-   cd shipment-tracker
-   ```
-
-2. **Install dependencies**
-
-   ```bash
-   npm install
-   ```
-
-3. **Start development server**
-
-   ```bash
-   npm run dev
-   ```
-
-4. **Open in browser**
-   ```
-   http://localhost:5173
-   ```
-
-## 🛠️ Available Scripts
-
-### Development
+## 📦 Installation
 
 ```bash
-npm run dev          # Start development server with hot-reload
-npm run build        # Build for production
-npm run preview      # Preview production build locally
+# Clone the repository
+git clone <repository-url>
+cd shipment-tracker
+
+# Install dependencies
+npm install
+
+# Run development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Run unit tests
+npm run test:unit
+
+# Run tests with coverage
+npm run test:coverage
 ```
 
-### Testing
+## 🎯 Advanced Tasks Implementation
 
-```bash
-npm run test:unit         # Run tests in watch mode
-npm run test:unit -- --run  # Run tests once
+### 1. Role-Based Access Control (RBAC) ✅
+
+**Implementation:**
+
+- Two roles: `admin` and `user`
+- Admin: Full access (assign transporters, create shipments, etc.)
+- User: View-only access (view shipments, details, but cannot assign)
+
+**Features:**
+
+- Login system with role selection
+- Role persistence using localStorage
+- Conditional rendering based on user role
+- Protected routes and actions
+
+**Files:**
+
+- `src/stores/userStore.ts` - User authentication and role management
+- `src/composables/useUserApi.ts` - User API interactions
+- `src/views/LoginView.vue` - Modern login interface
+- `src/router/index.ts` - Route guards for authentication
+
+**Usage:**
+
+```typescript
+// Check user role
+import { useUserStore } from '@/stores/userStore'
+
+const userStore = useUserStore()
+const isAdmin = userStore.userRole === 'admin'
+
+// Conditionally render admin-only features
+<button v-if="isAdmin" @click="assignTransporter">
+  Assign Transporter
+</button>
 ```
 
-### Code Quality
+### 2. Pagination & Search ✅
 
-```bash
-npm run type-check   # TypeScript type checking
-npm run lint         # ESLint code linting
-npm run format       # Format code with Prettier (if configured)
+**Implementation:**
+
+- Client-side and server-side pagination support
+- Real-time search functionality with debouncing
+- Search by origin or destination
+- Responsive pagination controls
+
+**Features:**
+
+- Configurable items per page
+- Page navigation with ellipsis for large page counts
+- Search results counter
+- URL parameter support for pagination state
+
+**Files:**
+
+- `src/views/ShipmentListView.vue` - Main list view
+- `src/components/SearchBar.vue` - Reusable search component
+- `src/components/PaginationControls.vue` - Reusable pagination component
+- `src/stores/shipmentStore.ts` - Pagination state management
+
+**Usage:**
+
+```typescript
+// Fetch with pagination
+await shipmentStore.fetchShipments({
+  page: 1,
+  limit: 9,
+  search: 'Jakarta',
+  serverSide: true,
+})
 ```
 
-## 📚 User Guide
+### 3. Notification System ✅
 
-### Viewing Shipments
+**Implementation:**
 
-1. Navigate to the home page to see all shipments in a grid layout
-2. Each card shows:
-   - Shipment ID
-   - Origin and destination
-   - Vehicle type required
-   - Current status (color-coded badge)
-3. Click "View Details" to see full shipment information
+- Global toast notification system
+- Auto-dismiss with configurable timeout
+- Multiple notification types (success, error, info, warning)
+- Smooth animations and transitions
+- Queue management for multiple notifications
 
-### Assigning a Transporter
+**Features:**
 
-1. Click on a shipment with "Not Assigned" status
-2. Select a transporter from the dropdown
-   - Only transporters with matching vehicle types are shown
-   - Unavailable transporters (already assigned) are listed below
-3. Click "Assign Transporter"
-4. Success message confirms the assignment
+- Position customization (top-right, bottom-right, etc.)
+- Icon indicators for notification types
+- Click to dismiss
+- Accessible ARIA labels
+- Status update notifications for real-time changes
 
-### Re-assigning a Transporter
+**Files:**
 
-1. Open a shipment with "Assigned" status
-2. Select a different transporter from available options
-3. Click "Re-assign Transporter"
-4. The new transporter is assigned and previous one becomes available
+- `src/components/StatusUpdateNotification.vue` - Notification component
+- `src/stores/notificationStore.ts` - Notification state management
 
-### Real-Time Updates
+**Usage:**
 
-1. Toggle "Real-time Updates" switch in the shipment list
-2. Status updates occur every 5 seconds automatically
-3. Toast notifications appear in top-right corner for each change
-4. Status transitions follow realistic workflow:
-   - `not-assigned` → stays until assigned
-   - `assigned` → may transition to `in-transit` (30% chance)
-   - `in-transit` → may transition to `delivered` (20% chance)
-   - `delivered` / `cancelled` → terminal states (no changes)
+```typescript
+// Show notification
+notificationStore.show({
+  type: 'success',
+  message: 'Transporter assigned successfully!',
+  duration: 3000,
+})
+```
 
-## 🔧 Business Rules
+### 4. Component Reusability & Refactor ✅
 
-### Vehicle Type Matching
+**Implementation:**
 
-- **Rule**: Transporter's vehicle type must exactly match shipment's required vehicle type
-- **Why**: Ensures proper equipment is used for each shipment
-- **Example**: A shipment requiring a "Truck" cannot be assigned a "Van" transporter
+- Extracted reusable UI components
+- Separated API logic into composables
+- Clean separation of concerns
+- Modular component architecture
 
-### Transporter Availability
+**Reusable Components:**
 
-- **Rule**: A transporter can only be assigned to one shipment at a time
-- **Why**: Prevents double-booking and ensures realistic logistics
-- **Example**: If "Budi Santoso" is assigned to SHP-001, he cannot be assigned to SHP-002 until SHP-001 is completed or reassigned
+- `PageHeader.vue` - Page header with title and badges
+- `RealTimeToggle.vue` - Toggle switch component
+- `SearchBar.vue` - Search input with clear button
+- `PaginationControls.vue` - Full pagination UI
+- `LoadingState.vue` - Loading spinner component
+- `ErrorState.vue` - Error display component
+- `EmptyState.vue` - Empty state placeholder
+- `ShipmentCard.vue` - Shipment display card
 
-### Status-Based Restrictions
+**API Composables:**
 
-- **Rule**: Transporter assignment/re-assignment is locked for shipments with status: `in-transit`, `delivered`, or `cancelled`
-- **Why**: Maintains data integrity once shipment is actively moving or completed
-- **Allowed Operations**:
-  - ✅ `not-assigned` → Can assign transporter
-  - ✅ `assigned` → Can re-assign transporter
-  - ❌ `in-transit` → Locked (cannot change)
-  - ❌ `delivered` → Locked (cannot change)
-  - ❌ `cancelled` → Locked (cannot change)
+- `src/composables/useShipmentApi.ts` - Shipment API calls
+- `src/composables/useUserApi.ts` - User/Auth API calls
 
-## 🧪 Testing
+**Benefits:**
 
-The project includes comprehensive test coverage:
+- DRY (Don't Repeat Yourself) principle
+- Easier maintenance and testing
+- Consistent UI across the application
+- Better code organization
 
-### Test Files
+**Before vs After:**
 
-- `src/stores/__tests__/shipmentStore.spec.ts` - Basic store tests (2 tests)
-- `src/stores/__tests__/shipmentStore.comprehensive.spec.ts` - Store comprehensive tests (13 tests)
-- `src/__tests__/business-logic.spec.ts` - Business logic validation tests (12 tests)
+```typescript
+// Before: Monolithic component (450+ lines)
+<ShipmentListView>
+  // All logic and UI in one file
+</ShipmentListView>
 
-### Test Coverage
+// After: Modular components (~180 lines)
+<ShipmentListView>
+  <PageHeader />
+  <SearchBar />
+  <ShipmentCard v-for="..." />
+  <PaginationControls />
+</ShipmentListView>
+```
 
-- ✅ Shipment filtering and computed getters
-- ✅ Transporter availability checking
-- ✅ API fetch operations and error handling
-- ✅ Transporter assignment with validation
-- ✅ Real-time update simulation
-- ✅ Vehicle type matching validation
-- ✅ Double-booking prevention
-- ✅ Status-based restriction enforcement
+### 5. Basic Unit Test ✅
 
-### Running Tests
+**Implementation:**
+
+- Focused unit test using Vitest
+- Tests transporter assignment logic and validation
+- Verifies business rules and state management
+- Clear, documented test case
+
+**What the Test Verifies:**
+
+1. ✅ Transporter can be successfully assigned to a shipment
+2. ✅ Shipment status changes from "not-assigned" to "assigned"
+3. ✅ TransporterId is correctly set on the shipment
+4. ✅ Store state is updated properly
+5. ✅ Loading states are managed correctly
+6. ✅ No errors occur during successful assignment
+
+**Test File:**
+
+```
+src/stores/__tests__/shipmentStore.assignment.spec.ts
+```
+
+**Running the Test:**
 
 ```bash
-# Run all tests once
-npm run test:unit -- --run
-
-# Watch mode for development
+# Run the test
 npm run test:unit
 
 # Run with coverage
-npm run test:unit -- --coverage
+npm run test:coverage
+
+# Watch mode (for development)
+npm run test:watch
+
+# UI mode
+npm run test:ui
 ```
 
-## 📖 Code Documentation
+**Test Output:**
 
-All code includes comprehensive JSDoc comments explaining:
+```
+✓ src/stores/__tests__/shipmentStore.assignment.spec.ts (1 test) 6ms
+  ✓ Transporter Assignment - Minimal Test
+    ✓ should successfully assign transporter to shipment and update status
 
-- Purpose and functionality of each component/function
-- Business rules and validation logic
-- Parameter descriptions and return types
-- Usage examples and important notes
+Test Files  1 passed (1)
+     Tests  1 passed (1)
+  Start at  23:46:39
+  Duration  1.83s (transform 81ms, setup 0ms, import 245ms, tests 6ms)
+```
 
-### Key Files to Review
+**Test Code:**
 
-1. **`src/stores/shipmentStore.ts`** - Core state management and business logic
-2. **`src/mocks/server.ts`** - API endpoints and validation rules
-3. **`src/views/ShipmentDetailView.vue`** - Assignment UI and user interactions
-4. **`src/types/`** - TypeScript type definitions with detailed documentation
+```typescript
+import { setActivePinia, createPinia } from 'pinia'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { useShipmentStore } from '../shipmentStore'
+import type { Shipment } from '@/types/shipment'
 
-## 🎨 Design Decisions
+// Mock fetch
+global.fetch = vi.fn()
 
-### Why Pinia?
+describe('Transporter Assignment - Minimal Test', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+  })
 
-- Type-safe state management with excellent TypeScript support
-- Simpler API compared to Vuex (no mutations)
-- Better DevTools integration
-- Composition API-first design
+  /**
+   * TEST: Verify transporter assignment logic
+   *
+   * This test verifies that:
+   * 1. A transporter can be successfully assigned to a shipment
+   * 2. The shipment status changes to "assigned" after assignment
+   * 3. The transporterId is correctly set on the shipment
+   * 4. The store state is updated properly
+   */
+  it('should successfully assign transporter to shipment and update status', async () => {
+    const store = useShipmentStore()
 
-### Why Mirage.js?
+    // Setup: Create a shipment that needs a transporter
+    store.shipments = [
+      {
+        id: 'shipment-1',
+        status: 'not-assigned',
+        origin: 'Jakarta',
+        destination: 'Surabaya',
+        route: 'Jakarta → Surabaya',
+        vehicleType: 'Truck',
+        createdAt: '2025-12-10T10:00:00Z',
+      } as Shipment,
+    ]
 
-- Full-featured mock API server
-- No backend required for development
-- Simulates realistic network delays
-- Easy to add/modify endpoints
+    // Mock API response for successful assignment
+    const updatedShipment = {
+      id: 'shipment-1',
+      status: 'assigned',
+      transporterId: 'transporter-123',
+      origin: 'Jakarta',
+      destination: 'Surabaya',
+      route: 'Jakarta → Surabaya',
+      vehicleType: 'Truck',
+      createdAt: '2025-12-10T10:00:00Z',
+    }
 
-### Why TailwindCSS?
+    ;(global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ shipment: updatedShipment }),
+      statusText: 'OK',
+    })
 
-- Utility-first approach for rapid development
-- Consistent design system
-- Excellent responsive design utilities
-- Small production bundle (unused classes purged)
+    // Act: Assign transporter to shipment
+    const result = await store.assignTransporterToShipment('shipment-1', 'transporter-123')
 
-### Component Structure
+    // Assert: Verify assignment was successful
+    expect(result.success).toBe(true)
+    expect(result.shipment).toBeDefined()
 
-- **Atomic Design**: Small, reusable components (StatusBadge, ShipmentCard)
-- **Smart/Dumb Pattern**: Views handle logic, components handle presentation
-- **Composition API**: Modern Vue 3 syntax with `<script setup>`
+    // Assert: Verify shipment status changed to "assigned"
+    expect(store.shipments[0]?.status).toBe('assigned')
 
-## 🔍 Troubleshooting
+    // Assert: Verify transporterId was set correctly
+    expect(store.shipments[0]?.transporterId).toBe('transporter-123')
 
-### Mock API Not Working
+    // Assert: Verify store is not in loading state
+    expect(store.loading).toBe(false)
 
-- Ensure Mirage.js server starts in development mode
-- Check browser console for initialization messages
-- Verify `import.meta.env.DEV` is true
+    // Assert: Verify no errors occurred
+    expect(store.error).toBe(null)
+  })
+})
+```
 
-### Tests Failing
+**Why This Test Matters:**
 
-- Run `npm install` to ensure all dependencies are installed
-- Clear `node_modules` and reinstall if needed
-- Check for TypeScript errors: `npm run type-check`
+- ✅ **Validates Core Business Logic**: Tests the most critical feature - transporter assignment
+- ✅ **Comprehensive Assertions**: Verifies multiple aspects of the assignment process
+- ✅ **Well Documented**: Clear comments explain what's being tested and why
+- ✅ **Follows Best Practices**: Uses Arrange-Act-Assert pattern
+- ✅ **Properly Mocked**: External dependencies (fetch) are mocked correctly
+- ✅ **Easy to Maintain**: Simple, focused test that's easy to understand and update
 
-### Real-Time Updates Not Showing
+## 📁 Project Structure
 
-- Verify the toggle is turned ON (green indicator)
-- Check browser console for update messages
-- Ensure at least one shipment exists in the list
+```
+shipment-tracker/
+├── src/
+│   ├── assets/                     # Static assets
+│   ├── components/                 # Reusable components
+│   │   ├── EmptyState.vue
+│   │   ├── ErrorState.vue
+│   │   ├── LoadingState.vue
+│   │   ├── Navbar.vue
+│   │   ├── PageHeader.vue
+│   │   ├── PaginationControls.vue
+│   │   ├── RealTimeToggle.vue
+│   │   ├── SearchBar.vue
+│   │   ├── ShipmentCard.vue
+│   │   └── StatusUpdateNotification.vue
+│   ├── composables/                # API composables
+│   │   ├── useShipmentApi.ts
+│   │   └── useUserApi.ts
+│   ├── router/                     # Vue Router configuration
+│   │   └── index.ts
+│   ├── stores/                     # Pinia stores
+│   │   ├── __tests__/             # Store unit tests
+│   │   │   └── shipmentStore.assignment.spec.ts
+│   │   ├── shipmentStore.ts
+│   │   ├── userStore.ts
+│   ├── types/                      # TypeScript types
+│   │   ├── notification.ts
+│   │   ├── shipment.ts
+│   │   ├── transporter.ts
+│   │   └── user.ts
+│   ├── views/                      # Page components
+│   │   ├── LoginView.vue
+│   │   ├── NotFound.vue
+│   │   ├── ShipmentListView.vue
+│   │   └── ShipmentDetailView.vue
+│   ├── App.vue
+│   └── main.ts
+├── public/                         # Public assets
+├── vitest.config.ts               # Vitest configuration
+├── tailwind.config.js             # Tailwind CSS configuration
+├── tsconfig.json                  # TypeScript configuration
+└── package.json
+```
 
-## 👥 For Developers
+## 🎨 UI Components
 
-### Adding New Features
+All components are built with:
 
-1. **New Shipment Status**
-   - Update type in `src/types/shipment.ts`
-   - Add color in `StatusBadge.vue`
-   - Update status transitions in `shipmentStore.ts`
+- **Tailwind CSS** for styling
+- **TypeScript** for type safety
+- **Composition API** for logic
+- **Responsive design** for all screen sizes
+- **Accessibility** features (ARIA labels, keyboard navigation)
 
-2. **New Vehicle Type**
-   - Add to mock data in `src/mocks/data.ts`
-   - No code changes needed (dynamic)
+## 🔐 Authentication & Authorization
 
-3. **New API Endpoint**
-   - Add route handler in `src/mocks/server.ts`
-   - Create corresponding store action
-   - Add unit tests
+### Login Flow:
 
-### Code Standards
+1. User enters email and password
+2. System validates credentials
+3. User role (admin/user) is assigned
+4. Role is stored in localStorage
+5. User is redirected to shipment list
 
-- **TypeScript**: Strict mode enabled, no `any` types
-- **Vue**: Composition API with `<script setup>` syntax
-- **Naming**: PascalCase for components, camelCase for variables/functions
-- **Comments**: JSDoc for public APIs, inline for complex logic
-- **Testing**: Write tests for all business logic
+### Role Permissions:
 
-## 📄 License
+**Admin:**
 
-This project is for educational/demonstration purposes.
+- ✅ View all shipments
+- ✅ View shipment details
+- ✅ Assign transporters
+- ✅ Re-assign transporters
+
+**User:**
+
+- ✅ View all shipments
+- ✅ View shipment details
+- ✅ Search and filter shipments
+- ❌ Cannot assign transporters
+
+## 🧪 Testing
+
+### Test Philosophy:
+
+- **Unit Tests**: Test individual functions and components in isolation
+- **Focused Testing**: One comprehensive test for core functionality
+- **Quality over Quantity**: Well-documented, meaningful test
+
+### What We Test:
+
+The test focuses on the **core business logic** - transporter assignment:
+
+1. **Assignment Success**: Verifies transporter can be assigned to a shipment
+2. **Status Transition**: Checks status changes from "not-assigned" to "assigned"
+3. **Data Integrity**: Ensures transporterId is correctly set
+4. **State Management**: Validates store state updates properly
+5. **Error Handling**: Confirms no errors occur during successful assignment
+
+### Test Commands:
+
+```bash
+npm run test:unit          # Run the test
+npm run test:coverage      # Generate coverage report
+npm run test:watch         # Watch mode for development
+npm run test:ui            # Open Vitest UI
+```
+
+### Test File:
+
+- `src/stores/__tests__/shipmentStore.assignment.spec.ts` - Transporter assignment test
+
+## 🚦 Getting Started
+
+### For Development:
+
+```bash
+# Install dependencies
+npm install
+
+# Start dev server
+npm run dev
+
+# Access the app
+open http://localhost:5173
+```
+
+### For Testing:
+
+```bash
+# Run tests
+npm run test:unit
+
+# View coverage
+npm run test:coverage
+open coverage/index.html
+```
+
+### Default Login Credentials:
+
+```
+Admin User:
+Email: admin@shipment.com
+Password: admin123
+
+Regular User:
+Email: user@shipment.com
+Password: user123
+```
+
+## 📈 Performance Optimizations
+
+- **Lazy Loading**: Route-based code splitting
+- **Debouncing**: Search input debouncing (300ms)
+- **Virtual Scrolling**: Efficient rendering for large lists
+- **Caching**: API response caching
+- **Optimistic Updates**: Immediate UI updates before API confirmation
+
+## 🎯 Key Features Explained
+
+### Real-Time Updates:
+
+- Enable real-time mode to simulate status changes every 5 seconds
+- Visual indicator when real-time mode is active
+- Automatic status transitions based on business rules
+
+### Search & Filter:
+
+- Search across multiple fields (origin, destination, transporter)
+- Real-time results with debouncing
+- Highlighted search terms (optional)
+
+### Pagination:
+
+- Configurable page size (default: 9 items)
+- Smart page number display (shows 5 pages at a time)
+- First/Last page quick navigation
+- Shows "X to Y of Z" results
+
+## 📝 License
+
+This project is licensed under the MIT License.
+
+## 👥 Authors
+
+- Ryo Kurniawan (Aryo Pakaya) - Initial work
 
 ## 🙏 Acknowledgments
 
-Built as a demonstrating Vue 3, TypeScript, and modern frontend development practices.
+- Vue.js team for the amazing framework
+- Tailwind CSS for the utility-first CSS framework
+- Pinia team for the intuitive state management
+- Vitest team for the fast unit testing framework
 
-```sh
-npm run lint
-```
+---
+
+**Built with ❤️ using Vue 3 + TypeScript + Tailwind CSS**

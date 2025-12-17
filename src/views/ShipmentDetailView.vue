@@ -3,6 +3,8 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useShipmentStore } from '@/stores/shipmentStore'
 import StatusBadge from '@/components/StatusBadge.vue'
+import { useUserStore } from '@/stores/userStore'
+import StatusUpdateNotification from '@/components/StatusUpdateNotification.vue'
 
 /**
  * ShipmentDetailView Component
@@ -20,6 +22,9 @@ import StatusBadge from '@/components/StatusBadge.vue'
 const route = useRoute()
 const router = useRouter()
 const shipmentStore = useShipmentStore()
+const userStore = useUserStore()
+
+const isAdmin = computed(() => userStore.userRole?.name === 'Admin')
 
 // UI state
 /** Currently selected transporter ID from dropdown */
@@ -596,7 +601,10 @@ function goBack() {
           </div>
 
           <!-- Assignment Form -->
-          <div v-if="shipmentStore.currentShipment.status === 'not-assigned'" class="border-t pt-6">
+          <div
+            v-if="shipmentStore.currentShipment.status === 'not-assigned' && isAdmin"
+            class="border-t pt-6"
+          >
             <h3 class="text-lg font-semibold text-gray-900 mb-4">Assign Transporter</h3>
 
             <div class="space-y-4">
@@ -664,7 +672,7 @@ function goBack() {
 
           <!-- Re-assign Option for Assigned Shipments (but not in-transit or delivered) -->
           <div
-            v-else-if="shipmentStore.currentShipment.status === 'assigned'"
+            v-else-if="shipmentStore.currentShipment.status === 'assigned' && isAdmin"
             class="border-t pt-6"
           >
             <h3 class="text-lg font-semibold text-gray-900 mb-4">Re-assign Transporter</h3>
@@ -762,5 +770,6 @@ function goBack() {
         <p class="text-gray-500">Shipment not found</p>
       </div>
     </div>
+    <StatusUpdateNotification />
   </div>
 </template>
